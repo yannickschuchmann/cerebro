@@ -89,6 +89,10 @@ services:
     ports:
       - "3000:8080"
       - "11434:11434"
+    environment:
+      - RAG_EMBEDDING_MODEL_TRUST_REMOTE_CODE=true
+      - RAG_EMBEDDING_MODEL=nomic-ai/nomic-embed-text-v1.5
+      - ENABLE_RAG_WEB_SEARCH=false
     labels:
       - traefik.enable=true
       - traefik.http.routers.openwebui.rule=Host(`openwebui.${DOMAIN_NAME}`)
