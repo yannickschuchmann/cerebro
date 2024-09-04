@@ -85,10 +85,10 @@ services:
       - "11434:11434"
     labels:
       - traefik.enable=true
-      - traefik.http.routers.stapi.rule=Host(`openwebui.${DOMAIN_NAME}`)
-      - traefik.http.routers.stapi.tls=true
-      - traefik.http.routers.stapi.entrypoints=web,websecure
-      - traefik.http.routers.stapi.tls.certresolver=mytlschallenge
+      - traefik.http.routers.openwebui.rule=Host(`openwebui.${DOMAIN_NAME}`)
+      - traefik.http.routers.openwebui.tls=true
+      - traefik.http.routers.openwebui.entrypoints=web,websecure
+      - traefik.http.routers.openwebui.tls.certresolver=mytlschallenge
     volumes:
       - ollama_data:/root/.ollama
       - open-webui_data:/app/backend/data
