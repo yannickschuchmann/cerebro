@@ -2,6 +2,7 @@ services:
   traefik:
     image: "traefik"
     restart: always
+    container_name: traefik
     command:
       - "--api=true"
       - "--api.dashboard=true"
@@ -34,6 +35,7 @@ services:
 
   n8n:
     image: docker.n8n.io/n8nio/n8n
+    container_name: n8n
     restart: always
     ports:
       - "127.0.0.1:5678:5678"
@@ -64,6 +66,7 @@ services:
 
   stapi:
     image: ghcr.io/yannickschuchmann/stapi
+    container_name: stapi
     restart: always
     ports:
       - "8080:8080"
@@ -78,7 +81,7 @@ services:
 
   open-webui:
     image: ghcr.io/open-webui/open-webui:ollama
-    container_name: open-webui
+    container_name: openwebui
     restart: always
     ports:
       - "3000:8080"
