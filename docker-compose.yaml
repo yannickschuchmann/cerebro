@@ -17,11 +17,9 @@ services:
       - "--certificatesresolvers.mytlschallenge.acme.tlschallenge=true"
       - "--certificatesresolvers.mytlschallenge.acme.email=${SSL_EMAIL}"
       - "--certificatesresolvers.mytlschallenge.acme.storage=/letsencrypt/acme.json"
-      - "--entrypoints.ollama.address=:11434"
     ports:
       - "80:80"
       - "443:443"
-      - "11434:11434"
     volumes:
       - traefik_data:/letsencrypt
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -84,31 +82,41 @@ services:
   #   environment:
   #     - MODEL=nomic-ai/nomic-embed-text-v1.5
 
-  open-webui:
-    image: ghcr.io/open-webui/open-webui:ollama
-    container_name: openwebui
+  ollama:
+    image: ollama/ollama
+    container_name: ollama
     restart: always
     ports:
-      - "3000:8080"
-    # environment:
-    # - RAG_EMBEDDING_MODEL_TRUST_REMOTE_CODE=true
-    # - RAG_EMBEDDING_MODEL=nomic-ai/nomic-embed-text-v1.5
-    # - ENABLE_RAG_WEB_SEARCH=false
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
     labels:
       - traefik.enable=true
-      - traefik.http.routers.openwebui.rule=Host(`openwebui.${DOMAIN_NAME}`)
-      - traefik.http.routers.openwebui.tls=true
-      - traefik.http.routers.openwebui.entrypoints=web,websecure
-      - traefik.http.routers.openwebui.tls.certresolver=mytlschallenge
-      # Add these new labels
       - traefik.http.routers.ollama.rule=Host(`ollama.${DOMAIN_NAME}`)
       - traefik.http.routers.ollama.tls=true
       - traefik.http.routers.ollama.entrypoints=websecure
       - traefik.http.routers.ollama.tls.certresolver=mytlschallenge
       - traefik.http.services.ollama.loadbalancer.server.port=11434
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui
+    container_name: openwebui
+    restart: always
+    ports:
+      - "3000:8080"
+    environment:
+      - OLLAMA_API_BASE_URL=http://ollama:11434/api
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.openwebui.rule=Host(`openwebui.${DOMAIN_NAME}`)
+      - traefik.http.routers.openwebui.tls=true
+      - traefik.http.routers.openwebui.entrypoints=websecure
+      - traefik.http.routers.openwebui.tls.certresolver=mytlschallenge
+      - traefik.http.services.openwebui.loadbalancer.server.port=8080
     volumes:
-      - ollama_data:/root/.ollama
       - open-webui_data:/app/backend/data
+    depends_on:
+      - ollama
 
 volumes:
   traefik_data:
