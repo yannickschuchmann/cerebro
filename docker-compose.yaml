@@ -17,9 +17,13 @@ services:
       - "--certificatesresolvers.mytlschallenge.acme.tlschallenge=true"
       - "--certificatesresolvers.mytlschallenge.acme.email=${SSL_EMAIL}"
       - "--certificatesresolvers.mytlschallenge.acme.storage=/letsencrypt/acme.json"
+      # Add this new entrypoint
+      - "--entrypoints.ollama.address=:11434"
     ports:
       - "80:80"
       - "443:443"
+      # Add this new port mapping
+      - "11434:11434"
     volumes:
       - traefik_data:/letsencrypt
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -99,6 +103,12 @@ services:
       - traefik.http.routers.openwebui.tls=true
       - traefik.http.routers.openwebui.entrypoints=web,websecure
       - traefik.http.routers.openwebui.tls.certresolver=mytlschallenge
+      # Add these new labels
+      - traefik.http.routers.ollama.rule=Host(`ollama.${DOMAIN_NAME}`)
+      - traefik.http.routers.ollama.tls=true
+      - traefik.http.routers.ollama.entrypoints=websecure
+      - traefik.http.routers.ollama.tls.certresolver=mytlschallenge
+      - traefik.http.services.ollama.loadbalancer.server.port=11434
     volumes:
       - ollama_data:/root/.ollama
       - open-webui_data:/app/backend/data
