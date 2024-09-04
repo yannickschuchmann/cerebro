@@ -71,6 +71,7 @@ services:
     restart: always
     ports:
       - "3000:8080"
+      - "11434:11434"
     labels:
       - traefik.enable=true
       - traefik.http.routers.stapi.rule=Host(`openwebui.${DOMAIN_NAME}`)
