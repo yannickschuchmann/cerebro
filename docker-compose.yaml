@@ -67,20 +67,20 @@ services:
     volumes:
       - n8n_data:/home/node/.n8n
 
-  stapi:
-    image: ghcr.io/yannickschuchmann/stapi
-    container_name: stapi
-    restart: always
-    ports:
-      - "8080:8080"
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.stapi.rule=Host(`stapi.${DOMAIN_NAME}`)
-      - traefik.http.routers.stapi.tls=true
-      - traefik.http.routers.stapi.entrypoints=web,websecure
-      - traefik.http.routers.stapi.tls.certresolver=mytlschallenge
-    environment:
-      - MODEL=nomic-ai/nomic-embed-text-v1.5
+  # stapi:
+  #   image: ghcr.io/yannickschuchmann/stapi
+  #   container_name: stapi
+  #   restart: always
+  #   ports:
+  #     - "8080:8080"
+  #   labels:
+  #     - traefik.enable=true
+  #     - traefik.http.routers.stapi.rule=Host(`stapi.${DOMAIN_NAME}`)
+  #     - traefik.http.routers.stapi.tls=true
+  #     - traefik.http.routers.stapi.entrypoints=web,websecure
+  #     - traefik.http.routers.stapi.tls.certresolver=mytlschallenge
+  #   environment:
+  #     - MODEL=nomic-ai/nomic-embed-text-v1.5
 
   open-webui:
     image: ghcr.io/open-webui/open-webui:ollama
@@ -89,10 +89,10 @@ services:
     ports:
       - "3000:8080"
       - "11434:11434"
-    environment:
-      - RAG_EMBEDDING_MODEL_TRUST_REMOTE_CODE=true
-      - RAG_EMBEDDING_MODEL=nomic-ai/nomic-embed-text-v1.5
-      - ENABLE_RAG_WEB_SEARCH=false
+    # environment:
+    # - RAG_EMBEDDING_MODEL_TRUST_REMOTE_CODE=true
+    # - RAG_EMBEDDING_MODEL=nomic-ai/nomic-embed-text-v1.5
+    # - ENABLE_RAG_WEB_SEARCH=false
     labels:
       - traefik.enable=true
       - traefik.http.routers.openwebui.rule=Host(`openwebui.${DOMAIN_NAME}`)
