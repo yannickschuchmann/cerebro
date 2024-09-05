@@ -1,13 +1,38 @@
+# Run LLMs on CPUs with Ollama
+#
+# Usage:
+#
+#  sky launch ollama.yaml -c ollama --env MODEL_NAME=llama2
+#
+# curl /v1/chat/completions:
+#
+#   ENDPOINT=$(sky status --endpoint 8888 ollama)
+#   curl $ENDPOINT/v1/chat/completions \
+#     -H "Content-Type: application/json" \
+#     -d '{
+#       "model": "llama2",
+#       "messages": [
+#         {
+#           "role": "system",
+#           "content": "You are a helpful assistant."
+#         },
+#         {
+#           "role": "user",
+#           "content": "Who are you?"
+#         }
+#       ]
+#     }'
+
 envs:
   MODEL_NAME: phi3 # mistral, phi, other ollama supported models
   EMBEDDING_MODEL_NAME: nomic-embed-text:v1.5
-  OLLAMA_HOST: 0.0.0.0:8888 # Host and port for Ollama to listen on
+  OLLAMA_HOST: 0.0.0.0:11434 # Host and port for Ollama to listen on
 
 resources:
   cpus: 4+
   memory: 8+ # 8 GB+ for 7B models, 16 GB+ for 13B models, 32 GB+ for 33B models
   # accelerators: L4:1  # No GPUs necessary for Ollama, but you can use them to run inference faster
-  ports: 8888
+  ports: 11434
   use_spot: true
   cloud: aws
   any_of:
@@ -19,7 +44,7 @@ resources:
     - region: eu-north-1
 
 service:
-  replicas: 1
+  replicas: 2
   # An actual request for readiness probe.
   readiness_probe:
     path: /v1/chat/completions
@@ -32,44 +57,31 @@ service:
 
 setup: |
   # Install Ollama
-  if [ "$(uname -m)" == "aarch64" ]; then
-    # For apple silicon support
-    sudo curl -L https://ollama.com/download/ollama-linux-arm64 -o /usr/bin/ollama
-  else
-    sudo curl -L https://ollama.com/download/ollama-linux-amd64 -o /usr/bin/ollama
-  fi
-  sudo chmod +x /usr/bin/ollama
-
-  # Start `ollama serve` and capture PID to kill it after pull is done
-  ollama serve &
-  OLLAMA_PID=$!
-  echo "Ollama started with PID $OLLAMA_PID"
-
-  # Wait for ollama to be ready
-  IS_READY=false
-  for i in {1..20};
-    do ollama list && IS_READY=true && break;
-    sleep 5;
-  done
-  if [ "$IS_READY" = false ]; then
-      echo "Ollama was not ready after 100 seconds. Exiting."
-      exit 1
-  fi
+  sudo curl -fsSL https://ollama.com/install.sh | sh
 
   # Pull the model
-  ollama pull $MODEL_NAME
+  sudo ollama pull $MODEL_NAME
   echo "Model $MODEL_NAME pulled successfully."
 
   # Pull the model
-  ollama pull $EMBEDDING_MODEL_NAME
+  sudo ollama pull $EMBEDDING_MODEL_NAME
   echo "Model $EMBEDDING_MODEL_NAME pulled successfully."
 
-  # Kill `ollama serve` after pull is done
-  if ps -p $OLLAMA_PID > /dev/null; then
-    kill $OLLAMA_PID
-  fi
+  # Create a new text file with Ollama service configuration
+  sudo mkdir -p /etc/systemd/system/ollama.service.d
+  cat << EOF | sudo tee /etc/systemd/system/ollama.service.d/override.conf
+[Service]
+Environment="OLLAMA_HOST=0.0.0.0" "OLLAMA_KEEP_ALIVE=-1" "OLLAMA_MAX_LOADED_MODELS=4"
+EOF
+
+  # Reload systemd to apply changes
+  sudo systemctl daemon-reload
+  sudo systemctl restart ollama
+
+  echo "Ollama service configuration created and applied."
 
 run: |
   # Run `ollama serve` in the foreground
   echo "Serving model $MODEL_NAME"
-  ollama serve
+  echo "On $OLLAMA_HOST"
+  OLLAMA_HOST=$OLLAMA_HOST sudo ollama serve
